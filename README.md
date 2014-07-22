@@ -140,20 +140,20 @@ serializing the message using the Json codec.
 The generation tool is designed to be run as a `protoc` plugin, thus it should
 work with any proto file supported by the official compiler.
 
-    protoc --plugin=protoc-gen-php --php_out=./build tutorial.proto
+    protoc --plugin=protoc-gen-php=protoc-gen-php.php --php_out=./build -I=. tutorial.proto
 
 To make use of non-standard options in your proto files (like `php.namespace`) you'll
 have to import the `php.proto` file included with the library. It's location will 
 depend on where you've installed this library.
 
     protoc -I=./Protobuf-PHP/library/DrSlump/Protobuf/Compiler/protos \
-           --plugin=protoc-gen-php --php_out=./build tutorial.proto
+           --plugin=protoc-gen-php=protoc-gen-php.php --php_out=./build tutorial.proto
 
 In order to make your life easier, the supplied protoc plugin offers an additional
 execution mode, where it acts as a wrapper for the `protoc` invocation. It will
 automatically include the `php.proto` path so you don't need to worry about it.
 
-    protoc-gen-php -o ./build tutorial.proto
+    protoc-gen-php.php -o ./build tutorial.proto
 
 
 ## LICENSE:

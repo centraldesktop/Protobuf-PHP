@@ -1,4 +1,4 @@
-#!/usr/bin/env php -d display_errors=stderr -d log_errors=On -d error_log=Off
+#!/usr/bin/php
 <?php
 // The MIT License
 //
