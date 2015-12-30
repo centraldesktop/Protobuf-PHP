@@ -1,223 +1,209 @@
 <?php
-
-/**
- * @var $this DrSlump\Protobuf\Compiler\AbstractGenerator
- */
-
-
 /*
+    Receives the following variables:
+        $namespace - The current namespace (aka package) for the file
+        $data      - A google.protobuf.DescriptorProto object
+        $nbSpaces  - The number of spaces
+*/
 
-   Receives the following variables:
+use DrSlump\Protobuf\Protobuf;
+use RuntimeException;
 
-       $namespace - The current namespace (aka package) for the file
-       $data - A google.protobuf.DescriptorProto object
+$spaces = str_repeat(' ', $nbSpaces);
+echo 'namespace '.$this->ns($namespace).';'.PHP_EOL;
+echo '// @@protoc_insertion_point(scope_namespace)'.PHP_EOL;
+echo '// @@protoc_insertion_point(namespace_'.$namespace.')'.PHP_EOL;
+echo PHP_EOL;
+echo 'use Closure;'.PHP_EOL;
+echo 'use DrSlump\Protobuf\Descriptor;'.PHP_EOL;
+echo 'use DrSlump\Protobuf\Field;'.PHP_EOL;
+echo 'use DrSlump\Protobuf\Message;'.PHP_EOL;
+echo 'use DrSlump\Protobuf\Protobuf;'.PHP_EOL;
+echo PHP_EOL;
+$ns = $namespace.'.'.$data->name;
+if ($this->comment($ns)) {
+    echo '/**'.PHP_EOL;
+    echo ' * '.$this->comment($ns, $spaces.' *').PHP_EOL;
+    echo ' */';
+}
+echo 'class '.$data->name.' extends Message'.PHP_EOL;
+echo '{'.PHP_EOL;
+if (!empty($data->field)) {
+    foreach ($data->field as $field) {
+        // Nothing to do.
+    }
+}
+echo $spaces.'/** @var Descriptor */'.PHP_EOL;
+echo $spaces.'protected static $__descriptor;'.PHP_EOL;
+echo PHP_EOL;
+echo $spaces.'/** @var Closure[] */'.PHP_EOL;
+echo $spaces.'protected static $__extensions = array();'.PHP_EOL;
+echo PHP_EOL;
+echo $spaces.'public static function descriptor()'.PHP_EOL;
+echo $spaces.'{'.PHP_EOL;
+echo $spaces.$spaces.'$descriptor = new Descriptor(__CLASS__, \''.$ns.'\');'.PHP_EOL;
+echo PHP_EOL;
+if (!empty($data->field)) {
+    foreach ($data->field as $f) {
+        echo $spaces.$spaces.'// '.$this->rule($f).' '.$this->type($f).' '.$f->name.' = '.$f->number.PHP_EOL;
+        echo $spaces.$spaces.'$f = new Field();'.PHP_EOL;
+        echo $spaces.$spaces.'$f->number = '.$f->number.';'.PHP_EOL;
+        echo $spaces.$spaces.'$f->name = \''.$this->fieldname($f).'\';'.PHP_EOL;
+        echo $spaces.$spaces.'$f->rule = Protobuf::RULE_'.strtoupper($this->rule($f)).';'.PHP_EOL;
+        echo $spaces.$spaces.'$f->type = Protobuf::TYPE_'.strtoupper($this->type($f)).';'.PHP_EOL;
+        if (!empty($f->type_name)) {
+            $ref = $f->type_name;
+            if (substr($ref, 0, 1) !== '.') {
+                throw new RuntimeException("Only fully qualified names are supported but found '$ref' at $ns");
+            }
+            echo $spaces.$spaces.'$f->reference = \''.$this->ns($ref).'\';'.PHP_EOL;
+        }
 
-   */
-?>
-namespace <?php echo $this->ns($namespace)?> {
-
-    // @@protoc_insertion_point(scope_namespace)
-    // @@protoc_insertion_point(namespace_<?php echo $namespace?>)
-
-    <?php
-    // Compute a new namespace with the message name as suffix
-    $ns = $namespace . '.' . $data->name;
-    ?>
-    <?php if ($this->comment($ns)): ?>
-    /**
-     * <?php echo $this->comment($ns, '     * ')?> 
-     */
-    <?php endif ?> 
-    class <?php echo $data->name?> extends \DrSlump\Protobuf\Message {
-        <?php if (!empty($data->field)): foreach ($data->field as $field): ?>
-        <?php // Nothing to do ?>
-        <?php endforeach; endif; ?>
-     
-        /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $__descriptor;
-        /** @var \Closure[] */
-        protected static $__extensions = array();
-
-        public static function descriptor()
-        {
-            $descriptor = new \DrSlump\Protobuf\Descriptor(__CLASS__, '<?php echo $ns?>');
-
-            <?php if (!empty($data->field)): foreach ($data->field as $f): ?>
-            // <?php echo $this->rule($f)?> <?php echo $this->type($f)?> <?php echo $f->name?> = <?php echo $f->number?> 
-            $f = new \DrSlump\Protobuf\Field();
-            $f->number = <?php echo $f->number?>;
-            $f->name   = "<?php echo $this->fieldname($f)?>";
-            $f->rule   = \DrSlump\Protobuf\Protobuf::RULE_<?php echo strtoupper($this->rule($f))?>;
-            $f->type   = \DrSlump\Protobuf\Protobuf::TYPE_<?php echo strtoupper($this->type($f))?>;
-            <?php if (!empty($f->type_name)):
-                $ref = $f->type_name;
-                if (substr($ref, 0, 1) !== '.') {
-                    throw new \RuntimeException("Only fully qualified names are supported but found '$ref' at $ns");
-                }
-            ?> 
-            $f->reference = '\<?php echo $this->ns($ref)?>';
-            <?php endif ?>
-
-            <?php
-            if (isset($f->default_value)):
-                switch ($f->type) {
-                case \DrSlump\Protobuf\Protobuf::TYPE_BOOL:
+        if (isset($f->default_value)) {
+            switch ($f->type) {
+                case Protobuf::TYPE_BOOL:
                     $bool = filter_var($f->default_value, FILTER_VALIDATE_BOOLEAN);
-            ?> 
-            $f->default = <?php echo $bool ? 'true' : 'false'?>;
-            <?php
-                break;
-                case \DrSlump\Protobuf\Protobuf::TYPE_STRING:
-            ?> 
-            $f->default = '<?php echo addcslashes($f->default_value, "'\\")?>';
-            <?php
-                break;
-                case \DrSlump\Protobuf\Protobuf::TYPE_ENUM:
-            ?> 
-            $f->default = \<?php echo $this->ns($f->type_name)?>::<?php echo $f->default_value?>;
-            <?php
-                break;
+                    echo $spaces.$spaces.'$f->default = '.($bool ? 'true' : 'false').';'.PHP_EOL;
+                    break;
+                case Protobuf::TYPE_STRING:
+                    echo $spaces.$spaces.'$f->default = \''.addcslashes($f->default_value, '\'\\').'\';'.PHP_EOL;
+                    break;
+                case Protobuf::TYPE_ENUM:
+                    echo $spaces.$spaces.'$f->default = \\'.$this->ns($f->type_name).'::'.$f->default_value.';'.PHP_EOL;
+                    break;
                 default: // Numbers
-            ?> 
-            $f->default = <?php echo $f->default_value?>;
-            <?php
-                } // switch
-            endif;
-            ?>
-
-            // @@protoc_insertion_point(scope_field)
-            // @@protoc_insertion_point(field_<?php echo $ns?>:<?php echo $f->name?>)
-
-            $descriptor->addField($f);
-            <?php endforeach; endif; ?>
-
-            foreach (self::$__extensions as $cb) {
-                $descriptor->addField($cb(), true);
-            }
-
-            // @@protoc_insertion_point(scope_descriptor)';
-            // @@protoc_insertion_point(descriptor_<?php echo $ns?>)
-
-            return $descriptor;
+                    echo $spaces.$spaces.'$f->default = '.$f->default_value.';'.PHP_EOL;
+            } // switch
         }
-
-
-        <?php if (!empty($data->field)): foreach ($data->getField() as $f): ?>
-        <?php
-            $name = $this->fieldname($f);
-            $Name = $this->camelize(ucfirst($name));
-        ?>
-
-        /**
-         * Check if "<?php echo $name?>" has a value
-         *
-         * @return boolean
-         */
-        public function has<?php echo $Name?>()
-        {
-            return isset($this-><?php echo $name?>);
-        }
-
-        /**
-         * Clear "<?php echo $name?>" value
-         */
-        public function clear<?php echo $Name?>()
-        {
-            unset($this-><?php echo $name?>);
-        }
-
-        <?php if ($f->label === \DrSlump\Protobuf\Protobuf::RULE_REPEATED): ?>
-
-        /**
-         * Get "<?php echo $name?>" value
-         *
-         * @return \PhpOption\Option of type \<?php echo $this->doctype($f)?>[]
-         */
-        public function get<?php echo $Name?>($idx = null)
-        {
-            if (NULL === $idx || !array_key_exists($idx, $this-><?php echo $name?>)) {
-                return  \PhpOption\None::create();
-            }
-
-            return new \PhpOption\Some($this-><?php echo $name?>[$idx]);
-        }
-
-        /**
-         * Get "<?php echo $name?>" list of values
-         *
-         * @return \<?php echo $this->doctype($f)?>[]
-         */
-        public function get<?php echo $Name?>List()
-        {
-            return $this-><?php echo $name?>;
-        }
-
-        /**
-         * @deprecated Use set<?php echo $Name?>List($value) instead
-         * Set "<?php echo $name?>" value
-         * @param \<?php echo $this->doctype($f)?>[] $value
-         */
-        public function set<?php echo $Name?>($value)
-        {
-            return $this-><?php echo $name?> = $value;
-        }
-
-        /**
-         * Set "<?php echo $name?>" list
-         * @param \<?php echo $this->doctype($f)?>[]|\Traversable $value
-         */
-         public function set<?php echo $Name?>List($value)
-         {
-             return $this-><?php echo $name?> = $value;
-         }
-
-        /**
-         * Add a new element to "<?php echo $name?>"
-         *
-         * @param \<?php echo $this->doctype($f)?> $value
-         */
-        public function add<?php echo $Name?>($value)
-        {
-            $this-><?php echo $name?>[] = $value;
-        }
-
-        <?php else: ?>
-
-        /**
-         * Get "<?php echo $name?>" value
-         <?php if ($f->label == \DrSlump\Protobuf\Protobuf::RULE_OPTIONAL): ?>
-         * @return \PhpOption\Option of type (\<?php echo $this->doctype($f)?>)
-         <?php else: ?>
-         * @return \<?php echo $this->doctype($f)?>
-         <?php endif; ?>
-         *
-         *
-         */
-        public function get<?php echo $Name?>()
-        {
-            <?php if ($f->label == \DrSlump\Protobuf\Protobuf::RULE_OPTIONAL): ?>
-            return \PhpOption\Option::fromValue($this-><?php echo $name?>);
-            <?php else: ?>
-            return $this-><?php echo $name?>;
-            <?php endif; ?>
-        }
-
-        /**
-         * Set "<?php echo $name?>" value
-         *
-         * @param \<?php echo $this->doctype($f)?> $value
-         */
-        public function set<?php echo $Name?>($value)
-        {
-            return $this-><?php echo $f->name?> = $value;
-        }
-
-        <?php endif ?>
-
-        <?php endforeach; endif; ?>
-
-        // @@protoc_insertion_point(scope_class)
-        // @@protoc_insertion_point(class_<?php echo $ns?>)
+        echo $spaces.$spaces.'// @@protoc_insertion_point(scope_field)'.PHP_EOL;
+        echo $spaces.$spaces.'// @@protoc_insertion_point(field_'.$ns.':'.$f->name.')'.PHP_EOL;
+        echo $spaces.$spaces.'$descriptor->addField($f);'.PHP_EOL;
+        echo PHP_EOL;
     }
 }
 
+echo $spaces.$spaces.'foreach (self::$__extensions as $cb) {'.PHP_EOL;
+echo $spaces.$spaces.$spaces.'$descriptor->addField($cb(), true);'.PHP_EOL;
+echo $spaces.$spaces.'}'.PHP_EOL;
+echo $spaces.$spaces.'// @@protoc_insertion_point(scope_descriptor)'.PHP_EOL;
+echo $spaces.$spaces.'// @@protoc_insertion_point(descriptor_'.$ns.')'.PHP_EOL;
+echo PHP_EOL;
+echo $spaces.$spaces.'return $descriptor;'.PHP_EOL;
+echo $spaces.'}'.PHP_EOL;
+
+if (!empty($data->field)) {
+    echo PHP_EOL;
+    foreach ($data->getField() as $f) {
+        $name = $this->fieldname($f);
+        $Name = $this->camelize(ucfirst($name));
+
+        echo $spaces.'/**'.PHP_EOL;
+        echo $spaces.' * Check if "'.$name.'" has a value'.PHP_EOL;
+        echo $spaces.' *'.PHP_EOL;
+        echo $spaces.' * @return bool'.PHP_EOL;
+        echo $spaces.' */'.PHP_EOL;
+        echo $spaces.'public function has'.$Name.'()'.PHP_EOL;
+        echo $spaces.'{'.PHP_EOL;
+        echo $spaces.$spaces.'return isset($this->'.$name.');'.PHP_EOL;
+        echo $spaces.'}'.PHP_EOL;
+        echo PHP_EOL;
+
+        echo $spaces.'/**'.PHP_EOL;
+        echo $spaces.' * Clear "'.$name.'" value'.PHP_EOL;
+        echo $spaces.' */'.PHP_EOL;
+        echo $spaces.'public function clear'.$Name.'()'.PHP_EOL;
+        echo $spaces.'{'.PHP_EOL;
+        echo $spaces.$spaces.'unset($this->'.$name.');'.PHP_EOL;
+        echo $spaces.'}'.PHP_EOL;
+        echo PHP_EOL;
+
+        if ($f->label === Protobuf::RULE_REPEATED) {
+            echo $spaces.'/**'.PHP_EOL;
+            echo $spaces.' * Get "'.$name.'" value'.PHP_EOL;
+            echo $spaces.' *'.PHP_EOL;
+            echo $spaces.' * @param int|null $idx'.PHP_EOL;
+            echo $spaces.' *'.PHP_EOL;
+            echo $spaces.' * @return \PhpOption\Option of type \\'.$this->doctype($f).'[]'.PHP_EOL;
+            echo $spaces.' */'.PHP_EOL;
+            echo $spaces.'public function get'.$Name.'($idx = null)'.PHP_EOL;
+            echo $spaces.'{'.PHP_EOL;
+            echo $spaces.$spaces.'if (null === $idx || !array_key_exists($idx, $this->'.$name.')) {'.PHP_EOL;
+            echo $spaces.$spaces.$spaces.'return \PhpOption\None::create();'.PHP_EOL;
+            echo $spaces.$spaces.'}'.PHP_EOL;
+            echo PHP_EOL;
+            echo $spaces.$spaces.'return new \PhpOption\Some($this->'.$name.'[$idx]);'.PHP_EOL;
+            echo $spaces.'}'.PHP_EOL;
+            echo PHP_EOL;
+
+            echo $spaces.'/**'.PHP_EOL;
+            echo $spaces.' * Get "'.$name.'" list of values'.PHP_EOL;
+            echo $spaces.' *'.PHP_EOL;
+            echo $spaces.' * @return \\'.$this->doctype($f).'[]'.PHP_EOL;
+            echo $spaces.' */'.PHP_EOL;
+            echo $spaces.'public function get'.$Name.'List()'.PHP_EOL;
+            echo $spaces.'{'.PHP_EOL;
+            echo $spaces.$spaces.'return $this->'.$name.';'.PHP_EOL;
+            echo $spaces.'}'.PHP_EOL;
+            echo PHP_EOL;
+
+            echo $spaces.'/**'.PHP_EOL;
+            echo $spaces.' * Set "'.$name.'" list of values'.PHP_EOL;
+            echo $spaces.' *'.PHP_EOL;
+            echo $spaces.' * @param \\'.$this->doctype($f).'[] $value'.PHP_EOL;
+            echo $spaces.' *'.PHP_EOL;
+            echo $spaces.' * @return \\'.$this->doctype($f).'[]'.PHP_EOL;
+            echo $spaces.' */'.PHP_EOL;
+            echo $spaces.'public function set'.$Name.'List($value)'.PHP_EOL;
+            echo $spaces.'{'.PHP_EOL;
+            echo $spaces.$spaces.'return $this->'.$name.' = $value;'.PHP_EOL;
+            echo $spaces.'}'.PHP_EOL;
+            echo PHP_EOL;
+
+            echo $spaces.'/**'.PHP_EOL;
+            echo $spaces.' * Add a new element to "'.$name.'"'.PHP_EOL;
+            echo $spaces.' *'.PHP_EOL;
+            echo $spaces.' * @param \\'.$this->doctype($f).' $value'.PHP_EOL;
+            echo $spaces.' */'.PHP_EOL;
+            echo $spaces.'public function add'.$Name.'($value)'.PHP_EOL;
+            echo $spaces.'{'.PHP_EOL;
+            echo $spaces.$spaces.'$this->'.$name.'[] = $value;'.PHP_EOL;
+            echo $spaces.'}'.PHP_EOL;
+            echo PHP_EOL;
+        } else {
+            echo $spaces.'/**'.PHP_EOL;
+            echo $spaces.' * Get "'.$name.'" value'.PHP_EOL;
+            echo $spaces.' *'.PHP_EOL;
+            if ($f->label == Protobuf::RULE_OPTIONAL) {
+                echo $spaces.' * @return \PhpOption\Option of type (\\'.$this->doctype($f).')'.PHP_EOL;
+            } else {
+                echo $spaces.' * @return \\'.$this->doctype($f).PHP_EOL;
+            }
+            echo $spaces.' */'.PHP_EOL;
+            echo $spaces.'public function get'.$Name.'()'.PHP_EOL;
+            echo $spaces.'{'.PHP_EOL;
+            if ($f->label == Protobuf::RULE_OPTIONAL) {
+                echo $spaces.$spaces.'return \PhpOption\Option::fromValue($this->'.$name.');'.PHP_EOL;
+            } else {
+                echo $spaces.$spaces.'return $this->'.$name.';'.PHP_EOL;
+            }
+            echo $spaces.'}'.PHP_EOL;
+            echo PHP_EOL;
+
+            echo $spaces.'/**'.PHP_EOL;
+            echo $spaces.' * Set "'.$name.'" value'.PHP_EOL;
+            echo $spaces.' *'.PHP_EOL;
+            echo $spaces.' * @param \\'.$this->doctype($f).' $value'.PHP_EOL;
+            echo $spaces.' *'.PHP_EOL;
+            echo $spaces.' * @return \\'.$this->doctype($f).PHP_EOL;
+            echo $spaces.' */'.PHP_EOL;
+            echo $spaces.'public function set'.$Name.'($value)'.PHP_EOL;
+            echo $spaces.'{'.PHP_EOL;
+            echo $spaces.$spaces.'return $this->'.$name.' = $value;'.PHP_EOL;
+            echo $spaces.'}'.PHP_EOL;
+            echo PHP_EOL;
+        }
+    }
+}
+echo $spaces.'// @@protoc_insertion_point(scope_class)'.PHP_EOL;
+echo $spaces.'// @@protoc_insertion_point(class_'.$ns.')'.PHP_EOL;
+echo '}'.PHP_EOL;

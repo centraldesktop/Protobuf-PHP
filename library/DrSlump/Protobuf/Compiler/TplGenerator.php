@@ -7,9 +7,10 @@ use google\protobuf as proto;
 
 class TplGenerator extends AbstractGenerator
 {
+    const STYLE_NB_SPACES = 4;
+
     /** @var string Path prefix for template files */
     protected $tpl;
-
 
     public function __construct(\DrSlump\Protobuf\Compiler $compiler)
     {
@@ -32,7 +33,7 @@ class TplGenerator extends AbstractGenerator
     public function init(proto\compiler\CodeGeneratorRequest $req)
     {
         // Run the template's configure script
-        $this->template('config', $req, null);
+        $this->template('config', $req, null, self::STYLE_NB_SPACES);
     }
 
     public function setTemplate($tpl)
@@ -45,12 +46,11 @@ class TplGenerator extends AbstractGenerator
         return $this->tpl;
     }
 
-
     public function generate(proto\FileDescriptorProto $proto)
     {
         // Keep a reference to the current proto
         $this->proto = $proto;
-        
+
         // Obtain the root namespace
         $ns = $proto->getPackage();
 
@@ -61,12 +61,12 @@ class TplGenerator extends AbstractGenerator
 
         // Generate Enums
         if (!empty($proto->enum_type)) {
-            $result += $this->generateEnums($proto->enum_type, $ns);
+            $result += $this->generateEnums($proto->enum_type, $ns, self::STYLE_NB_SPACES);
         }
 
         // Generate Messages
         if (!empty($proto->message_type)) {
-            $result += $this->generateMessages($proto->message_type, $ns);
+            $result += $this->generateMessages($proto->message_type, $ns, self::STYLE_NB_SPACES);
         }
 
         // Collect extensions
@@ -85,21 +85,19 @@ class TplGenerator extends AbstractGenerator
 
             $src = array();
             foreach ($this->extensions as $extendee=>$fields) {
-                $src[] = $this->template('extension', $fields, $extendee);
+                $src[] = $this->template('extension', $fields, $extendee, self::STYLE_NB_SPACES);
             }
 
             $result[$fname] = implode("\n", $src);
         }
 
-
         // Generate services
         if ($this->option('generic_services') && $proto->hasService()) {
             foreach ($proto->getServiceList() as $service) {
-                $src = $this->template('service', $service, $ns);
+                $src = $this->template('service', $service, $ns, self::STYLE_NB_SPACES);
                 $result[$namespace . '.' . $service->getName()] = $src;
             }
         }
-
 
         $suffix = $this->option('suffix', '.php');
 
@@ -117,20 +115,18 @@ class TplGenerator extends AbstractGenerator
                 $file = new proto\compiler\CodeGeneratorResponse\File();
                 $file->setName($fname);
 
-                $src = $this->template('file', $content, $ns);
+                $src = $this->template('file', $content, $ns, self::STYLE_NB_SPACES);
                 $file->setContent($src);
 
                 $files[] = $file;
             }
-
         } else {
-
             $fname = pathinfo($proto->name, PATHINFO_FILENAME) . $suffix;
 
             $file = new \google\protobuf\compiler\CodeGeneratorResponse\File();
             $file->setName($fname);
 
-            $src = $this->template('file', implode("\n", $result), $ns);
+            $src = $this->template('file', implode("\n", $result), $ns, self::STYLE_NB_SPACES);
             $file->setContent($src);
 
             $files[] = $file;
@@ -139,16 +135,17 @@ class TplGenerator extends AbstractGenerator
         return $files;
     }
 
-
     /**
      * Runs a template file
      *
      * @param string $tpl
      * @param mixed $data
      * @param string $namespace
+     * @param int $nbSpaces
+     *
      * @return string
      */
-    public function template($tpl, $data, $namespace)
+    public function template($tpl, $data, $namespace, $nbSpaces)
     {
         $tpl = "{$this->tpl}-{$tpl}.php";
         if (!is_readable($tpl)) {
@@ -160,29 +157,28 @@ class TplGenerator extends AbstractGenerator
         return ob_get_clean();
     }
 
-
-    protected function generateEnums($enums, $namespace)
+    protected function generateEnums($enums, $namespace, $nbSpaces)
     {
         $result = array();
         foreach ($enums as $enum) {
             $ns = $namespace . '.' . $enum->name;
-            $result[$ns] = $this->template('enum', $enum, $namespace);
+            $result[$ns] = $this->template('enum', $enum, $namespace, $nbSpaces);
         }
         return $result;
     }
 
-    protected function generateMessages($messages, $namespace)
+    protected function generateMessages($messages, $namespace, $nbSpaces)
     {
         $result = array();
         foreach ($messages as $msg) {
             $ns = $namespace . '.' . $msg->name;
-            $result[$ns] = $this->template('message', $msg, $namespace);
+            $result[$ns] = $this->template('message', $msg, $namespace, $nbSpaces);
 
             if (!empty($msg->enum_type)) {
-                $result += $this->generateEnums($msg->getEnumType(), $ns);
+                $result += $this->generateEnums($msg->getEnumType(), $ns, $nbSpaces);
             }
             if (!empty($msg->nested_type)) {
-                $result += $this->generateMessages($msg->getNestedType(), $ns);
+                $result += $this->generateMessages($msg->getNestedType(), $ns, $nbSpaces);
             }
 
             // Collect extensions
@@ -195,5 +191,4 @@ class TplGenerator extends AbstractGenerator
 
         return $result;
     }
-
 }
