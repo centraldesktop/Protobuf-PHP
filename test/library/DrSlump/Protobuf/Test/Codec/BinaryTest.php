@@ -34,7 +34,7 @@ class BinaryTest extends \PHPUnit_Framework_TestCase
         $max = pow(2, 54)-1;
         $min = -$max;
 
-        $fields = [
+        $fields = array(
             'double' => [1, 0.1, 1.0, -1, -0.1, -100000, 123456789.12345, -123456789.12345],
             'float'  => [1, 0.1, 1.0, -1, -0.1, -100000, 12345.123, -12345.123],
             'int64'  => [0, 1, -1, 123456789123456789, -123456789123456789, $min],
@@ -50,7 +50,7 @@ class BinaryTest extends \PHPUnit_Framework_TestCase
             'sfixed64'  => [0, 1, -1, 123456789123456789, -123456789123456789],
             'sint32'  => [0, 1, -1, 123456789, -123456789],
             'sint64' => [0, 1, -1, 123456789123456789, -123456789123456789, $min, $max],
-        ];
+        );
 
         foreach ($fields as $field=>$values) {
             foreach ($values as $value) {

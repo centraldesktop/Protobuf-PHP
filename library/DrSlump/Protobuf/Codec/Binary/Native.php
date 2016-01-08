@@ -238,7 +238,7 @@ class Native extends Protobuf\CodecAbstract
 
     protected function getWireType($type, $default)
     {
-        static $map = [
+        static $map = array(
             Protobuf\Protobuf::TYPE_INT32    => self::WIRE_VARINT,
             Protobuf\Protobuf::TYPE_INT64    => self::WIRE_VARINT,
             Protobuf\Protobuf::TYPE_UINT32   => self::WIRE_VARINT,
@@ -256,7 +256,7 @@ class Native extends Protobuf\CodecAbstract
             Protobuf\Protobuf::TYPE_FIXED32  => self::WIRE_FIXED32,
             Protobuf\Protobuf::TYPE_SFIXED32 => self::WIRE_FIXED32,
             Protobuf\Protobuf::TYPE_FLOAT    => self::WIRE_FIXED32
-        ];
+        );
 
         // Unknown types just return the reported wire type
         return isset($map[$type]) ? $map[$type] : $default;
