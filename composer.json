@@ -14,7 +14,7 @@
     ],
     "bin"        : ["protoc-gen-php.bat", "protoc-gen-php.php"],
     "require"    : {
-        "php"                : ">=5.5.0",
+        "php"                : ">=5.3.0",
         "ext-mbstring"       : "*",
         "phpoption/phpoption": "1.5.*",
         "symfony/console"    : "2.*"
